@@ -120,40 +120,53 @@ void update()
 
         update_variables();
 
+        if (distancePoints(current_position, base_position) > max_base_distance)
+        {
+            current_state = resetting_orientation;
+        }
+        
         // DO NOT FORGET that if robair is too far from its base (ie, its distance to the base is higher than max_base_distance),
         // robair should stop to interact with the moving person and go back to its base
         switch ( current_state )
         {
             case waiting_for_a_person:
                 process_waiting_for_a_person();
+                break;
 
             case observing_the_person:
                 process_observing_the_person();
+                break;
 
             case rotating_to_the_person:
                 process_rotating_to_the_person();
+                break;
 
             case moving_to_the_person:
                 process_moving_to_the_person();
+                break;
 
             case interacting_with_the_person:
                 process_interacting_with_the_person();
+                break;
 
             case rotating_to_the_base:
                 process_rotating_to_the_base();
+                break;
 
             case moving_to_the_base:
                 process_moving_to_the_base();
+                break;
 
             case resetting_orientation:
                 process_resetting_orientation();
+                break;
         }
 
-    new_localization = false;
-    new_person_position = false;
+        new_localization = false;
+        new_person_position = false;
 
-    state_has_changed = current_state != previous_state;
-    previous_state = current_state;
+        state_has_changed = current_state != previous_state;
+        previous_state = current_state;
 
     }
     else
@@ -203,7 +216,7 @@ void process_waiting_for_a_person()
     // Processing of the state
     // as soon as we detect a moving person, we switch to the state "observing_the_person"
     if ( new_person_position )
-        current_state = rotating_to_the_person;
+        current_state = observing_the_person;
 
 }
 
