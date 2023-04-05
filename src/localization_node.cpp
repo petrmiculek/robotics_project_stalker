@@ -34,7 +34,8 @@ private:
 
     ros::Subscriber sub_scan;
     ros::Subscriber sub_odometry;
-    ros::Publisher pub_localization_marker;
+    ros::Publisher pub_localization_complete_marker;
+    ros::Publisher pub_localization;
     ros::Subscriber sub_position;
 
     // to store, process and display laserdata
@@ -86,7 +87,9 @@ public:
 
         sub_scan = n.subscribe("scan", 1, &localization_node::scanCallback, this);
         sub_odometry = n.subscribe("odom", 1, &localization_node::odomCallback, this);
-        pub_localization_marker = n.advertise<visualization_msgs::Marker>("localization_marker", 1); // Preparing a topic to publish our results. This will be used by the visualization tool rviz
+        pub_localization_complete_marker = n.advertise<visualization_msgs::Marker>("localization_complete_marker", 1); // Preparing a topic to publish our results. This will be used by the visualization tool rviz
+        pub_localization = n.advertise<geometry_msgs::Point>("localization", 1);     // Preparing a topic to publish the position of the person
+
         sub_position = n.subscribe("initialpose", 1, &localization_node::positionCallback, this);
 
         // get map via RPC
@@ -186,8 +189,8 @@ public:
         max_x = initial_position.x + radius_square;
         min_y = initial_position.y - radius_square;
         max_y = initial_position.y + radius_square;
-        min_orientation = initial_orientation - M_PI / 2;
-        max_orientation = initial_orientation + M_PI / 2;
+        min_orientation = 0;
+        max_orientation = 360 * M_PI/180;
         for (float loop_x = min_x; loop_x <= max_x; loop_x += distance_resolution)
         {
             for (float loop_y = min_y; loop_y <= max_y; loop_y += distance_resolution)
@@ -217,6 +220,8 @@ public:
 
         sensor_model(estimated_position.x, estimated_position.y, estimated_orientation);
         populateMarkerTopic();
+        pub_localization.publish(estimated_position);
+
         ROS_INFO("(%f, %f, %f): MAX score = %i", estimated_position.x, estimated_position.y, estimated_orientation * 180 / M_PI, score_max);
         ROS_INFO("initialize localization done");
 
@@ -299,6 +304,8 @@ public:
 
         sensor_model(estimated_position.x, estimated_position.y, estimated_orientation);
         populateMarkerTopic();
+        pub_localization.publish(estimated_position);
+
         ROS_INFO("(%f, %f, %f): MAX score = %i", estimated_position.x, estimated_position.y, estimated_orientation * 180 / M_PI, score_max);
         ROS_INFO("estimate_position done");
     }
@@ -340,6 +347,7 @@ public:
             geometry_msgs::Point hit;
             // hit.x = ...;
             // hit.y = ..;
+            //In case we face any issue with this, try out theta[loop]
             hit.x = x + r[loop] * cos(o + beam_angle);
             hit.y = y + r[loop] * sin(o + beam_angle);
 
@@ -493,7 +501,8 @@ public:
             marker.colors.push_back(c);
         }
 
-        pub_localization_marker.publish(marker);
+        pub_localization_complete_marker.publish(marker);
+
     }
 
     // Distance between two points
