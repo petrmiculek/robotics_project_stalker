@@ -21,8 +21,8 @@ private:
 
     ros::NodeHandle n;
 
-    // communication with detection_node or datmo_node
-    ros::Subscriber sub_goal_to_reach;
+    // communication with detection_node
+    ros::Subscriber sub_rotation_to_do;
 
     // communication with odometry
     ros::Subscriber sub_odometry;
@@ -30,8 +30,8 @@ private:
     // communication with cmd_vel to send command to the mobile robot
     ros::Publisher pub_cmd_vel;
 
-    geometry_msgs::Point goal_to_reach;
-    bool new_goal_to_reach;//to check if a new /goal_to_reach is available or not
+    // geometry_msgs::Point goal_to_reach;
+    // bool new_goal_to_reach;//to check if a new /goal_to_reach is available or not
 
     //pid for rotation
     float rotation_to_do, rotation_done;
@@ -58,9 +58,9 @@ rotation_node() {
     sub_odometry = n.subscribe("odom", 1, &rotation_node::odomCallback, this);
 
     // communication with datmo
-    sub_goal_to_reach = n.subscribe("goal_to_reach", 1, &rotation_node::goal_to_reachCallback, this);
+    sub_rotation_to_do = n.subscribe("rotation_to_do", 1, &rotation_node::rotation_to_doCallback, this);
 
-    new_goal_to_reach = false;
+    // new_goal_to_reach = false;
     init_odom = false;   
     cond_rotation = false; //TO COMPLETE //TODO
 
@@ -83,9 +83,9 @@ void update()
     if ( init_odom )
     {
 
-        // we receive a new /goal_to_reach
-        if ( new_goal_to_reach )
-            init_rotation();
+        // // we receive a new /goal_to_reach
+        // if ( new_goal_to_reach )
+        //     init_rotation();
 
         //we are performing a rotation
         do
@@ -99,41 +99,41 @@ void update()
 
 }// update
 
-void init_rotation()
-{
+// void init_rotation()
+// {
 
-    initial_orientation = current_orientation; //TO COMPLETE //TODO
+//     initial_orientation = current_orientation; //TO COMPLETE //TODO
 
-    new_goal_to_reach = false;
-    ROS_INFO("processing the /goal_to_reach received at (%f, %f)", goal_to_reach.x, goal_to_reach.y);   
+//     new_goal_to_reach = false;
+//     ROS_INFO("processing the /goal_to_reach received at (%f, %f)", goal_to_reach.x, goal_to_reach.y);   
 
-    // we have a rotation and a translation to perform
-    // we compute the /translation_to_do
-    translation_to_do = sqrt( ( goal_to_reach.x * goal_to_reach.x ) + ( goal_to_reach.y * goal_to_reach.y ) );
+//     // we have a rotation and a translation to perform
+//     // we compute the /translation_to_do
+//     translation_to_do = sqrt( ( goal_to_reach.x * goal_to_reach.x ) + ( goal_to_reach.y * goal_to_reach.y ) );
 
-    if ( translation_to_do )
-    {
+//     if ( translation_to_do )
+//     {
 
-        //we compute the /rotation_to_do
-        rotation_to_do = acos( goal_to_reach.x / translation_to_do );
+//         //we compute the /rotation_to_do
+//         // rotation_to_do = acos( goal_to_reach.x / translation_to_do );
 
-        if ( goal_to_reach.y < 0 )
-            rotation_to_do *=-1;
+//         // if ( goal_to_reach.y < 0 )
+//         //     rotation_to_do *=-1;
 
-        //we initialize the pid for the control of rotation
-        error_integral_rotation = 0;
-        error_previous_rotation = 0;
+//         //we initialize the pid for the control of rotation
+//         error_integral_rotation = 0;
+//         error_previous_rotation = 0;
 
-        ROS_INFO("rotation_to_do: %f, translation_to_do: %f", rotation_to_do*180/M_PI, translation_to_do);
+//         ROS_INFO("rotation_to_do: %f, translation_to_do: %f", rotation_to_do*180/M_PI, translation_to_do);
 
-    }
-    else
-    {
-        ROS_WARN("translation_to_do is equal to 0");
-        rotation_to_do = 0;
-    }
+//     }
+//     else
+//     {
+//         ROS_WARN("translation_to_do is equal to 0");
+//         // rotation_to_do = 0;
+//     }
 
-}// init_rotation
+// }// init_rotation
 
 void compute_rotation()
 {
@@ -223,12 +223,16 @@ void odomCallback(const nav_msgs::Odometry::ConstPtr& o) {
 
 }
 
-void goal_to_reachCallback(const geometry_msgs::Point::ConstPtr& g) {
-// process the goal received from moving_persons detector
+void rotation_to_doCallback(const std_msgs::Float32::ConstPtr& r_to_do) { 
+// process the goal received from decision_node
 
-    new_goal_to_reach = true;
-    goal_to_reach = *g;
-
+    // new_goal_to_reach = true;
+    // goal_to_reach = *g;
+    rotation_to_do = r_to_do->data;
+    initial_orientation = current_orientation;
+    //we initialize the pid for the control of rotation
+    error_integral_rotation = 0;
+    error_previous_rotation = 0;
 }
 
 // Distance between two points
@@ -244,7 +248,7 @@ int main(int argc, char **argv){
 
     ros::init(argc, argv, "rotation_node");
 
-    ROS_INFO("(rotation_node) waiting for a /goal_to_reach");
+    ROS_INFO("(rotation_node) waiting for a /rotation_to_do");
     rotation_node bsObject;
 
     ros::spin();
