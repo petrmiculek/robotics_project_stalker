@@ -26,6 +26,7 @@
 #define frequency_expected_moving_to_person 5 // 
 // note: interacting with the person has no timeout
 #define frequency_expected_rotating_to_base 5 // ticks when rotated towards the base until we start moving towards it
+#define frequency_expected_trasnlation_to_base 5
 
 // Numbers of ticks to give up the user interaction
 
@@ -483,10 +484,24 @@ public:
         // Processing of the state
         // Robair moves to its base
         // if robair is close to its base and does not move, after a while (use frequency), we switch to the state "resetting_orientation"
-        if (new_localization)
+
+        if ( new_localization )
         {
-            ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
+            ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation*180/M_PI);
         }
+        //If the translation to do is less than or equal to 5cm, this indicates that the robot is close
+        if(translation_to_base <= 0.005){
+            frequency = std::min(frequency_expected_trasnlation_to_base, frequency + 1);
+            //After a while, if the translation to do is less than or equal to 5cm, then we note that robair is not moving and we change state
+            if (frequency == frequency_expected_trasnlation_to_base)
+            {
+                current_state = resetting_orientation;
+            }
+        }
+        else{
+            pub_goal_to_reach.publish(local_base_position);
+        }
+        
     }
 
     void process_resetting_orientation()
