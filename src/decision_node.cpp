@@ -39,6 +39,37 @@
 
 #define max_base_distance 6 // in meters
 
+
+// Transofrm the position of the base in the cartesian local frame of robot
+// Input: base_position: position of the base in the map frame
+//        current_position: position of the robot in the map frame
+//        orientation: orientation of the robot in the map frame
+// Output: new_base_point: position of the base in the local frame of the robot
+geometry_msgs::Point transformPoint(geometry_msgs::Point &base, geometry_msgs::Point &current_pos, float orientation)
+{
+    geometry_msgs::Point new_base_point;
+    float x = base.x - current_pos.x;
+    float y = base.y - current_pos.y;
+
+    new_base_point.x = x * cos(orientation) + y * sin(orientation);
+    new_base_point.y = -x * sin(orientation) + y * cos(orientation);
+    return new_base_point;
+}
+
+// Keep the value passed as parameter withing the unit circle
+// Input: orientation of the robot in the map frame
+// Output: orientation of the robot in the map frame, within the unit circle 
+float clamp(float orientation)
+{
+    if (orientation > M_PI)
+        return orientation - 2 * M_PI;
+
+    if (orientation < -M_PI)
+        return orientation + 2 * M_PI;
+
+    return orientation;
+}
+
 class decision_node
 {
 private:
@@ -198,29 +229,38 @@ public:
     void update_variables()
     {
 
-        if (new_person_position)
+        if ( new_person_position )
         {
-            translation_to_person = distancePoints(robot_position, person_position);
+            translation_to_person = distancePoints(origin_position, person_position);
 
-            if (translation_to_person > 0)
+            if ( translation_to_person > 0 )
             {
-                rotation_to_person = acos(person_position.x / translation_to_person);
-                if (person_position.y < 0)
-                    rotation_to_person *= -1;
+                rotation_to_person = acos( person_position.x / translation_to_person );
+                if ( person_position.y < 0 )
+                    rotation_to_person *=-1;
             }
             else
                 rotation_to_person = 0;
 
             person_tracked = person_position.x != 0 || person_position.y != 0;
-        }
+        }        
 
-        if (new_localization)
+        if ( new_localization )
         {
             // when we receive a new position(x, y, o) of robair in the map, we update:
             // translation_to_base: the translation that robair has to do to reach its base
             // rotation_to_base: the rotation that robair has to do to reach its base
             // local_base_position: the position of the base in the cartesian local frame of robot
+
+            translation_to_base = distancePoints(current_position, base_position);
+            local_base_position = transformPoint(base_position, current_position, current_orientation);
+            
+            rotation_to_base = acos(local_base_position.x / translation_to_base) * 180 / M_PI;
+            if ( local_base_position.y < 0 )
+                rotation_to_base *= -1;
+
         }
+
     }
 
     void process_waiting_for_a_person()
