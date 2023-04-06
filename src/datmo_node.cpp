@@ -742,9 +742,9 @@ void track_a_moving_person() {
         if ( !tracking_mode )
         {
             ROS_WARN("moving person tracked has been lost");
+            // publish robot's position as the tracked one == signal to decision_node that nobody is tracked
             moving_person_tracked.x = 0;
             moving_person_tracked.y = 0;
-            // publish robot's position as the tracked one
             pub_datmo.publish(moving_person_tracked);
         }
     }
