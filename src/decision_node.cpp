@@ -231,7 +231,7 @@ public:
 
         if ( new_person_position )
         {
-            translation_to_person = distancePoints(origin_position, person_position);
+            translation_to_person = distancePoints(robot_position, person_position);
 
             if ( translation_to_person > 0 )
             {
