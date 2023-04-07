@@ -199,19 +199,19 @@ public:
                 break;
 
             case interacting_with_the_person:
-                process_interacting_with_the_person();
+                // process_interacting_with_the_person();
                 break;
 
             case rotating_to_the_base:
-                process_rotating_to_the_base();
+                // process_rotating_to_the_base();
                 break;
 
             case moving_to_the_base:
-                process_moving_to_the_base();
+                // process_moving_to_the_base();
                 break;
 
             case resetting_orientation:
-                process_resetting_orientation();
+                // process_resetting_orientation();
                 break;
             }
 
@@ -270,7 +270,7 @@ public:
         {
             ROS_INFO("current_state: waiting_for_a_person");
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
         }
 
         // Processing of the state
@@ -292,7 +292,7 @@ public:
             ROS_INFO("current_state: observing_the_person");
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
@@ -380,7 +380,7 @@ public:
             ROS_INFO("current_state: moving_to_the_person");
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
             frequency_giveup = 0;
         }
@@ -435,7 +435,7 @@ public:
             ROS_INFO("current_state: interacting_with_the_person");
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
             frequency_giveup = 0;
         }
@@ -481,7 +481,7 @@ public:
             ROS_INFO("current_state: rotating_to_the_base");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
@@ -517,7 +517,7 @@ public:
             ROS_INFO("current_state: moving_to_the_base");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
@@ -552,7 +552,7 @@ public:
             ROS_INFO("current_state: initializing_rotation");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
