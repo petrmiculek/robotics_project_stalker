@@ -172,20 +172,27 @@ void init_action()
 
 }// init_action
 
+float clamp(float orientation)
+{
+    if (orientation > M_PI)
+        return orientation - 2 * M_PI * (int)(orientation / (2 * M_PI));
+
+    if (orientation < -M_PI)
+        return orientation + 2 * M_PI * (int)(orientation / (2 * M_PI));
+
+    return orientation;
+}
+
 void compute_rotation()
 {
 
   ROS_INFO("current_orientation: %f, initial_orientation: %f", current_orientation*180/M_PI, initial_orientation*180/M_PI);
     rotation_done = current_orientation - initial_orientation;
     
-    if (rotation_done < -M_PI)
-    	rotation_done += (M_PI*2);
-    if (rotation_done > M_PI)
-    	rotation_done += -(M_PI*2);
+    // rotation_done always be between -M_PI and +M_PI
+    rotation_done = clamp(rotation_done);
 
-    //do not forget that rotation_done must always be between -M_PI and +M_PI
-
-	error_rotation = rotation_to_do - rotation_done ;
+	error_rotation = rotation_to_do - rotation_done;
 	
     ROS_INFO("rotation_to_do: %f, rotation_done: %f, error_rotation: %f", rotation_to_do*180/M_PI, rotation_done*180/M_PI, error_rotation*180/M_PI);
 
@@ -244,7 +251,9 @@ void combine_rotation_and_translation()
 
     float coef_rotation = fabs(rotation_speed)/rotation_speed_max;
     if ( coef_rotation >= 1 )
+    {
         coef_rotation = 1;
+    }
     float coef_translation = 1 - coef_rotation;
 
     translation_speed *= coef_translation; 
