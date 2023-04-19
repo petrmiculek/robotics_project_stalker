@@ -572,6 +572,11 @@ public:
                 current_state = waiting_for_a_person;
             }
         }
+        else{
+            std_msgs::Float32 rot_msg = std_msgs::Float32();
+            rot_msg.data = rotation_to_base;
+            pub_rotation_to_do.publish(rot_msg);
+        }
 
     }
 
