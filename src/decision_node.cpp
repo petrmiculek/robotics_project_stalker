@@ -565,7 +565,7 @@ public:
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
         
-        if(fabs(rotation_to_base - base_orientation) <= 0.1){
+        if(fabs(current_orientation - base_orientation) <= 0.1){
             frequency = std::min(frequency_expected_orientation_at_base, frequency + 1);
             if (frequency == frequency_expected_orientation_at_base)
             {
