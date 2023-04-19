@@ -27,6 +27,7 @@
 // note: interacting with the person has no timeout
 #define frequency_expected_rotating_to_base 5 // ticks when rotated towards the base until we start moving towards it
 #define frequency_expected_trasnlation_to_base 5
+#define frequency_expected_orientation_at_base 5 // ticks when rotated towards the base until we start moving towards it
 
 // Numbers of ticks to give up the user interaction
 
@@ -62,10 +63,10 @@ geometry_msgs::Point transformPoint(geometry_msgs::Point &base, geometry_msgs::P
 float clamp(float orientation)
 {
     if (orientation > M_PI)
-        return orientation - 2 * M_PI;
+        return orientation - 2 * M_PI * (int)(orientation / (2 * M_PI));
 
     if (orientation < -M_PI)
-        return orientation + 2 * M_PI;
+        return orientation + 2 * M_PI * (int)(orientation / (2 * M_PI));
 
     return orientation;
 }
@@ -563,6 +564,20 @@ public:
         {
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
+        
+        if(fabs(current_orientation - base_orientation) <= 0.1){
+            frequency = std::min(frequency_expected_orientation_at_base, frequency + 1);
+            if (frequency == frequency_expected_orientation_at_base)
+            {
+                current_state = waiting_for_a_person;
+            }
+        }
+        else{
+            std_msgs::Float32 rot_msg = std_msgs::Float32();
+            rot_msg.data = rotation_to_base;
+            pub_rotation_to_do.publish(rot_msg);
+        }
+
     }
 
     // CALLBACKS

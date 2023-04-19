@@ -1,3 +1,4 @@
+// action_us
 #include "ros/ros.h"
 #include <geometry_msgs/Twist.h>
 #include "geometry_msgs/Point.h"
@@ -25,6 +26,16 @@
 
 #define safety_distance 0.3
 
+float clamp(float orientation)
+{
+    if (orientation > M_PI)
+        return orientation - 2 * M_PI * (int)(orientation / (2 * M_PI));
+
+    if (orientation < -M_PI)
+        return orientation + 2 * M_PI * (int)(orientation / (2 * M_PI));
+
+    return orientation;
+}
 class action_node {
 private:
 
@@ -119,7 +130,8 @@ void update() {
         {
             compute_rotation();
             compute_translation();
-            cond_goal = cond_rotation || cond_translation; //DO NOT FORGET TO UPDATE cond_goal
+            cond_goal = cond_rotation || cond_translation;
+            // cond_goal = ... DO NOT FORGET TO UPDATE cond_goal
             combine_rotation_and_translation();            
             move_robot();
         }
@@ -153,12 +165,12 @@ void init_action()
             rotation_to_do *=-1;
 
         //we initialize the pid for the control of rotation
-        initial_orientation = current_orientation; //TO COMPLETE
+        initial_orientation = current_orientation;
         error_integral_rotation = 0;
         error_previous_rotation = 0;
 
         //we initialize the pid for the control of translation
-        initial_position = current_position; //TO COMPLETE
+        initial_position = current_position;
         error_integral_translation = 0;
         error_previous_translation = 0;
 
@@ -175,65 +187,58 @@ void init_action()
 void compute_rotation()
 {
 
-  ROS_INFO("current_orientation: %f, initial_orientation: %f", current_orientation*180/M_PI, initial_orientation*180/M_PI);
-    rotation_done = current_orientation - initial_orientation;
-    
-    if (rotation_done < -M_PI)
-    	rotation_done += (M_PI*2);
-    if (rotation_done > M_PI)
-    	rotation_done += -(M_PI*2);
+    ROS_INFO("current_orientation: %f, initial_orientation: %f", current_orientation * 180 / M_PI, initial_orientation * 180 / M_PI);
+    // rotation_done = ...;
+    rotation_done = clamp(current_orientation - initial_orientation);  // OWN
 
-    //do not forget that rotation_done must always be between -M_PI and +M_PI
+    // do not forget that rotation_done must always be between -M_PI and +M_PI
 
-	error_rotation = rotation_to_do - rotation_done ;
-	
-    ROS_INFO("rotation_to_do: %f, rotation_done: %f, error_rotation: %f", rotation_to_do*180/M_PI, rotation_done*180/M_PI, error_rotation*180/M_PI);
+    // error_rotation = ...;
+    error_rotation = clamp(rotation_to_do - rotation_done);  // OWN
+    ROS_INFO("rotation_to_do: %f, rotation_done: %f, error_rotation: %f", rotation_to_do * 180 / M_PI, rotation_done * 180 / M_PI, error_rotation * 180 / M_PI);
 
-    cond_rotation = fabs(error_rotation) > error_rotation_threshold; //cond_rotation is used to control if we stop or not the pid
+    // cond_rotation = ...; cond_rotation is used to control if we stop or not the pid
+    cond_rotation = (fabs(error_rotation) > error_rotation_threshold);  // OWN
 
-		
-    if ( cond_rotation )
+    if (cond_rotation)
     {
-        //Implementation of a PID controller for rotation_to_do;
-
-        float error_derivation_rotation = error_rotation - error_previous_rotation;
+        // Implementation of a PID controller for rotation_to_do;
+        float error_derivation_rotation = error_rotation - error_previous_rotation; 
         error_previous_rotation = error_rotation;
+
         ROS_INFO("error_derivation_rotation: %f", error_derivation_rotation);
 
         error_integral_rotation += error_rotation;
         ROS_INFO("error_integral_rotation: %f", error_integral_rotation);
 
-        //control of rotation with a PID controller
+        // control of rotation with a PID controller
         rotation_speed = kpr * error_rotation + kir * error_integral_rotation + kdr * error_derivation_rotation;
-        ROS_INFO("rotation_speed: %f", rotation_speed*180/M_PI);
+        ROS_INFO("rotation_speed: %f", rotation_speed * 180 / M_PI);
     }
+
 }//compute_rotation
 
 void compute_translation()
 {
 
     ROS_INFO("current_position: (%f, %f), initial_position: (%f, %f)", current_position.x, current_position.y, initial_position.x, initial_position.y);
-    translation_done = distancePoints(current_position , initial_position);
-    error_translation = translation_to_do - translation_done;
+    translation_done = distancePoints(current_position, initial_position); // OWN
+    error_translation = translation_to_do - translation_done;  // OWN
 
     ROS_INFO("translation_to_do: %f, translation_done: %f, error_translation: %f", translation_to_do, translation_done, error_translation);
 
-    cond_translation =  fabs(error_translation) >  error_translation_threshold;
-    //cond_translation is used to control if we stop or not the pid for translation
-
+    cond_translation = fabs(error_translation) > error_translation_threshold; 
     if ( cond_translation )
     {
         //Implementation of a PID controller for translation_to_do;
-
         float error_derivation_translation = error_translation - error_previous_translation;
-        error_previous_translation = error_translation;
         ROS_INFO("error_derivation_translation: %f", error_derivation_translation);
 
         error_integral_translation += error_translation;
         ROS_INFO("error_integral_translation: %f", error_integral_translation);
 
         //control of translation with a PID controller
-        translation_speed =  kpt * error_translation + kit * error_integral_translation + kdt * error_derivation_translation;
+        translation_speed = kpt * error_translation + kit * error_integral_translation + kdt * error_derivation_translation;
         ROS_INFO("translation_speed: %f", translation_speed);
     }    
 
@@ -242,12 +247,12 @@ void compute_translation()
 void combine_rotation_and_translation()
 {
 
-    float coef_rotation = fabs(rotation_speed)/rotation_speed_max;
+    float coef_rotation = fabs(error_rotation) / rotation_speed_max;
     if ( coef_rotation >= 1 )
         coef_rotation = 1;
     float coef_translation = 1 - coef_rotation;
 
-    translation_speed *= coef_translation; 
+    translation_speed = coef_translation * translation_speed;
     ROS_INFO("coef_rotation: %f, rotation_speed: %f, coef_translation: %f, translation_speed: %f", coef_rotation, rotation_speed*180/M_PI, coef_translation, translation_speed);
 
 }//combine_rotation_and_translation
@@ -322,10 +327,6 @@ void goal_to_reachCallback(const geometry_msgs::Point::ConstPtr& g) {
 
     new_goal_to_reach = true;
     goal_to_reach = *g;
-    initial_orientation = current_orientation ;
-    initial_position = current_position ; 
-    rotation_done = 0;
-    translation_done = 0;
 
 }
 
