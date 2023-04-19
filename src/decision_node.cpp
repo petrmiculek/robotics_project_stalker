@@ -18,6 +18,8 @@
 #define rotating_to_the_base 5
 #define moving_to_the_base 6
 #define resetting_orientation 7
+#define interaction_distance 0.5
+#define min_angle 0.1
 
 // Numbers of ticks to advance the user interaction
 #define frequency_expected 25           // unused
@@ -200,19 +202,19 @@ public:
                 break;
 
             case interacting_with_the_person:
-                // process_interacting_with_the_person();
+                process_interacting_with_the_person();
                 break;
 
             case rotating_to_the_base:
-                // process_rotating_to_the_base();
+                process_rotating_to_the_base();
                 break;
 
             case moving_to_the_base:
-                // process_moving_to_the_base();
+                process_moving_to_the_base();
                 break;
 
             case resetting_orientation:
-                // process_resetting_orientation();
+                process_resetting_orientation();
                 break;
             }
 
@@ -340,7 +342,7 @@ public:
         if (person_tracked)
         {
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            if (fabs(rotation_to_person) < 0.1)
+            if (fabs(rotation_to_person) < min_angle)
             {
                 frequency = std::min(frequency_expected_rotating_to_person, frequency + 1);
                 if (frequency == frequency_expected_rotating_to_person)
@@ -405,7 +407,7 @@ public:
             // set goal to reach - the person
             pub_goal_to_reach.publish(person_position);
 
-            if (fabs(translation_to_person) < 0.1)
+            if (fabs(translation_to_person) < interaction_distance)
             {
                 frequency = std::min(frequency_expected_moving_to_person, frequency + 1);
                 if (frequency == frequency_expected_moving_to_person)
@@ -447,7 +449,7 @@ public:
         if (person_tracked)
         {
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            if (fabs(translation_to_person) <= 0.1)
+            if (fabs(translation_to_person) <= interaction_distance)
             {
                 // interaction going on - do nothing
             }
@@ -493,8 +495,8 @@ public:
         {
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
-
-        if (fabs(rotation_to_base) < 0.1)
+        //0.1 rad ~= 5.7 deg
+        if (fabs(rotation_to_base) < min_angle)
         {
             frequency = std::min(frequency_expected_rotating_to_base, frequency + 1);
             if (frequency == frequency_expected_rotating_to_base)
@@ -565,7 +567,7 @@ public:
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
         
-        if(fabs(current_orientation - base_orientation) <= 0.1){
+        if(fabs(current_orientation - base_orientation) <= min_angle){
             frequency = std::min(frequency_expected_orientation_at_base, frequency + 1);
             if (frequency == frequency_expected_orientation_at_base)
             {
