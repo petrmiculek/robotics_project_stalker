@@ -258,7 +258,7 @@ public:
             translation_to_base = distancePoints(current_position, base_position);
             local_base_position = transformPoint(base_position, current_position, current_orientation);
             
-            rotation_to_base = acos(local_base_position.x / translation_to_base) * 180 / M_PI;
+            rotation_to_base = acos(local_base_position.x / translation_to_base) ;
             if ( local_base_position.y < 0 )
                 rotation_to_base *= -1;
 
@@ -495,6 +495,7 @@ public:
         {
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
+        ROS_INFO("Position of base: (%f, %f, %f)" ,local_base_position.x , local_base_position.y,rotation_to_base* 180 / M_PI );
         //0.1 rad ~= 5.7 deg
         if (fabs(rotation_to_base) < min_angle)
         {
@@ -592,6 +593,7 @@ public:
         new_person_position = true;
         person_position.x = g->x;
         person_position.y = g->y;
+        
     }
 
     void robot_movingCallback(const std_msgs::Bool::ConstPtr &state)
@@ -604,6 +606,13 @@ public:
     void localizationCallback(const geometry_msgs::Point::ConstPtr &l)
     {
         // process the localization received from my localization
+        if (base_position.x == 0 && base_position.y == 0)
+        {
+            base_position.x = l->x;
+            base_position.y = l->y;
+            base_orientation = l->z;
+                ROS_INFO("position of robair in the map: (%f, %f, %f)", base_position.x, base_position.y, base_orientation * 180 / M_PI);
+        }
 
         new_localization = true;
         init_localization = true;

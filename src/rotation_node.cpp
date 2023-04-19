@@ -119,6 +119,7 @@ void init_rotation()
 
     new_goal_to_reach = false;
     initial_orientation = current_orientation; //TO COMPLETE //TODO
+    
 //     ROS_INFO("processing the /goal_to_reach received at (%f, %f)", goal_to_reach.x, goal_to_reach.y);   
 
 //     // we have a rotation and a translation to perform
@@ -247,8 +248,8 @@ void rotation_to_doCallback(const std_msgs::Float32::ConstPtr& r_to_do) {
     new_goal_to_reach = true;
     // goal_to_reach = *g;
     rotation_to_do = r_to_do->data;
-    initial_orientation = current_orientation;
-    rotation_done = 0;
+    // initial_orientation = current_orientation;
+    // rotation_done = 0;
 
     // //we initialize the pid for the control of rotation
     // error_integral_rotation = 0;

@@ -220,6 +220,7 @@ public:
 
         sensor_model(estimated_position.x, estimated_position.y, estimated_orientation);
         populateMarkerTopic();
+        estimated_position.z = estimated_orientation;
         pub_localization.publish(estimated_position);
 
         ROS_INFO("(%f, %f, %f): MAX score = %i", estimated_position.x, estimated_position.y, estimated_orientation * 180 / M_PI, score_max);
@@ -304,6 +305,7 @@ public:
 
         sensor_model(estimated_position.x, estimated_position.y, estimated_orientation);
         populateMarkerTopic();
+        estimated_position.z = estimated_orientation;
         pub_localization.publish(estimated_position);
 
         ROS_INFO("(%f, %f, %f): MAX score = %i", estimated_position.x, estimated_position.y, estimated_orientation * 180 / M_PI, score_max);
