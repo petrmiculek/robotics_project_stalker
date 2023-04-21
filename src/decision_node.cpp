@@ -19,7 +19,7 @@
 #define moving_to_the_base 6
 #define resetting_orientation 7
 #define interaction_distance 0.5
-#define min_angle 0.1
+#define min_angle 2
 
 // Numbers of ticks to advance the user interaction
 #define frequency_expected 25           // unused
@@ -139,7 +139,8 @@ public:
         // communication with localization node
         sub_localization = n.subscribe("localization", 1, &decision_node::localizationCallback, this);
 
-        current_state = waiting_for_a_person;
+        current_state = rotating_to_the_base;
+        // current_state = waiting_for_a_person;
         previous_state = -1;
 
         new_person_position = false;
@@ -255,8 +256,8 @@ public:
             // rotation_to_base: the rotation that robair has to do to reach its base
             // local_base_position: the position of the base in the cartesian local frame of robot
 
-            translation_to_base = distancePoints(current_position, base_position);
             local_base_position = transformPoint(base_position, current_position, current_orientation);
+            translation_to_base = distancePoints(current_position, local_base_position);
             
             rotation_to_base = acos(local_base_position.x / translation_to_base) ;
             if ( local_base_position.y < 0 )
@@ -389,7 +390,7 @@ public:
         }
 
         // what should robair do if it is too far from home ?
-        if (distancePoints(current_position, base_position) > max_base_distance)
+        if (distancePoints(current_position, local_base_position) > max_base_distance)
         {
             current_state = rotating_to_the_base;
             return;
@@ -497,8 +498,10 @@ public:
         }
         ROS_INFO("Position of base: (%f, %f, %f)" ,local_base_position.x , local_base_position.y,rotation_to_base* 180 / M_PI );
         //0.1 rad ~= 5.7 deg
+        ROS_INFO("Rotation to base %f", rotation_to_base);
         if (fabs(rotation_to_base) < min_angle)
         {
+            ROS_INFO("Waiting on movement..");
             frequency = std::min(frequency_expected_rotating_to_base, frequency + 1);
             if (frequency == frequency_expected_rotating_to_base)
             {
