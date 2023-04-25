@@ -18,6 +18,8 @@
 #define rotating_to_the_base 5
 #define moving_to_the_base 6
 #define resetting_orientation 7
+#define interaction_distance 0.5
+#define min_angle 0.1
 
 // Numbers of ticks to advance the user interaction
 #define frequency_expected 25           // unused
@@ -256,7 +258,7 @@ public:
             translation_to_base = distancePoints(current_position, base_position);
             local_base_position = transformPoint(base_position, current_position, current_orientation);
             
-            rotation_to_base = acos(local_base_position.x / translation_to_base) * 180 / M_PI;
+            rotation_to_base = acos(local_base_position.x / translation_to_base) ;
             if ( local_base_position.y < 0 )
                 rotation_to_base *= -1;
 
@@ -271,7 +273,7 @@ public:
         {
             ROS_INFO("current_state: waiting_for_a_person");
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
         }
 
         // Processing of the state
@@ -293,7 +295,7 @@ public:
             ROS_INFO("current_state: observing_the_person");
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
@@ -340,7 +342,7 @@ public:
         if (person_tracked)
         {
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            if (fabs(rotation_to_person) < 0.1)
+            if (fabs(rotation_to_person) < min_angle)
             {
                 frequency = std::min(frequency_expected_rotating_to_person, frequency + 1);
                 if (frequency == frequency_expected_rotating_to_person)
@@ -381,7 +383,7 @@ public:
             ROS_INFO("current_state: moving_to_the_person");
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
             frequency_giveup = 0;
         }
@@ -405,7 +407,7 @@ public:
             // set goal to reach - the person
             pub_goal_to_reach.publish(person_position);
 
-            if (fabs(translation_to_person) < 0.1)
+            if (fabs(translation_to_person) < interaction_distance)
             {
                 frequency = std::min(frequency_expected_moving_to_person, frequency + 1);
                 if (frequency == frequency_expected_moving_to_person)
@@ -436,7 +438,7 @@ public:
             ROS_INFO("current_state: interacting_with_the_person");
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
             frequency_giveup = 0;
         }
@@ -447,7 +449,7 @@ public:
         if (person_tracked)
         {
             ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            if (fabs(translation_to_person) <= 0.1)
+            if (fabs(translation_to_person) <= interaction_distance)
             {
                 // interaction going on - do nothing
             }
@@ -482,7 +484,7 @@ public:
             ROS_INFO("current_state: rotating_to_the_base");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
@@ -493,8 +495,9 @@ public:
         {
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
-
-        if (fabs(rotation_to_base) < 0.1)
+        ROS_INFO("Position of base: (%f, %f, %f)" ,local_base_position.x , local_base_position.y,rotation_to_base* 180 / M_PI );
+        //0.1 rad ~= 5.7 deg
+        if (fabs(rotation_to_base) < min_angle)
         {
             frequency = std::min(frequency_expected_rotating_to_base, frequency + 1);
             if (frequency == frequency_expected_rotating_to_base)
@@ -518,7 +521,7 @@ public:
             ROS_INFO("current_state: moving_to_the_base");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
@@ -553,7 +556,7 @@ public:
             ROS_INFO("current_state: initializing_rotation");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            getchar();
+            // getchar();
             frequency = 0;
         }
 
@@ -565,7 +568,7 @@ public:
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
         
-        if(fabs(current_orientation - base_orientation) <= 0.1){
+        if(fabs(current_orientation - base_orientation) <= min_angle){
             frequency = std::min(frequency_expected_orientation_at_base, frequency + 1);
             if (frequency == frequency_expected_orientation_at_base)
             {
@@ -590,6 +593,7 @@ public:
         new_person_position = true;
         person_position.x = g->x;
         person_position.y = g->y;
+        
     }
 
     void robot_movingCallback(const std_msgs::Bool::ConstPtr &state)
@@ -608,9 +612,10 @@ public:
             base_position.x = l->x;
             base_position.y = l->y;
             base_orientation = l->z;
+            ROS_INFO("position of robair in the map: (%f, %f, %f)", base_position.x, base_position.y, base_orientation * 180 / M_PI);
+
         }
-        
-        // process the localization received from my localization
+
         new_localization = true;
         init_localization = true;
         current_position = *l;
