@@ -601,8 +601,16 @@ public:
 
     void localizationCallback(const geometry_msgs::Point::ConstPtr &l)
     {
+        
+        // set initial base position on startup
+        if (base_position.x == 0 && base_position.y == 0)
+        {
+            base_position.x = l->x;
+            base_position.y = l->y;
+            base_orientation = l->z;
+        }
+        
         // process the localization received from my localization
-
         new_localization = true;
         init_localization = true;
         current_position = *l;
