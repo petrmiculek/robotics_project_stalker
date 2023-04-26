@@ -211,6 +211,7 @@ public:
                             score_max = score_current;
                             estimated_position.x = loop_x;
                             estimated_position.y = loop_y;
+                            estimated_position.z = o;
                             estimated_orientation = o;
                         }
                     }

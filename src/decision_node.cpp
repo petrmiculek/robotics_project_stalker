@@ -608,13 +608,15 @@ public:
 
     void localizationCallback(const geometry_msgs::Point::ConstPtr &l)
     {
-        // process the localization received from my localization
+        
+        // set initial base position on startup
         if (base_position.x == 0 && base_position.y == 0)
         {
             base_position.x = l->x;
             base_position.y = l->y;
             base_orientation = l->z;
-                ROS_INFO("position of robair in the map: (%f, %f, %f)", base_position.x, base_position.y, base_orientation * 180 / M_PI);
+            ROS_INFO("position of robair in the map: (%f, %f, %f)", base_position.x, base_position.y, base_orientation * 180 / M_PI);
+
         }
 
         new_localization = true;
