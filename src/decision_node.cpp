@@ -19,8 +19,8 @@
 #define moving_to_the_base 6
 #define resetting_orientation 7
 #define interaction_distance 0.5
-#define min_angle 2
-
+#define min_angle 0.1
+#define min_angle_base 0.7
 // Numbers of ticks to advance the user interaction
 #define frequency_expected 25           // unused
 #define frequency_expected_observing 25 // ticks of having observed a person until we start rotating towards them
@@ -257,11 +257,18 @@ public:
             // local_base_position: the position of the base in the cartesian local frame of robot
 
             local_base_position = transformPoint(base_position, current_position, current_orientation);
-            translation_to_base = distancePoints(current_position, local_base_position);
+            translation_to_base = distancePoints(robot_position, local_base_position);
             
-            rotation_to_base = acos(local_base_position.x / translation_to_base) ;
-            if ( local_base_position.y < 0 )
-                rotation_to_base *= -1;
+            if ( translation_to_base > 0 ){
+                // ROS_INFO("aa: (%f, %f, %f)", local_base_position.x, translation_to_base, local_base_position.x / translation_to_base);
+                rotation_to_base = acos(local_base_position.x / translation_to_base) ;
+                if ( local_base_position.y < 0 )
+                    rotation_to_base *= -1;
+
+            }else
+                rotation_to_base = 0;
+
+
 
         }
 
@@ -294,8 +301,8 @@ public:
         if (state_has_changed)
         {
             ROS_INFO("current_state: observing_the_person");
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            ROS_INFO("press enter to continue");
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("press enter to continue");
             // getchar();
             frequency = 0;
         }
@@ -305,7 +312,7 @@ public:
         // if the moving person does not move during a while (use frequency), we switch to the state "rotating_to_the_person"
         if (person_tracked)
         {
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             frequency = std::min(frequency_expected_observing, frequency + 1);
             if (frequency == frequency_expected_observing)
             {
@@ -329,9 +336,9 @@ public:
         if (state_has_changed)
         {
             ROS_INFO("current_state: rotating_to_the_person");
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            ROS_INFO("press enter to continue");
-            getchar();
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("press enter to continue");
+            // getchar();
             frequency = 0;
             frequency_giveup = 0;
         }
@@ -342,7 +349,7 @@ public:
         // we switch to the state "moving_to_the_person"
         if (person_tracked)
         {
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             if (fabs(rotation_to_person) < min_angle)
             {
                 frequency = std::min(frequency_expected_rotating_to_person, frequency + 1);
@@ -382,8 +389,8 @@ public:
         if (state_has_changed)
         {
             ROS_INFO("current_state: moving_to_the_person");
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            ROS_INFO("press enter to continue");
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("press enter to continue");
             // getchar();
             frequency = 0;
             frequency_giveup = 0;
@@ -403,7 +410,7 @@ public:
         // (use frequency), we switch to the state "interacting_with_the_person"
         if (person_tracked)
         {
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
 
             // set goal to reach - the person
             pub_goal_to_reach.publish(person_position);
@@ -437,8 +444,8 @@ public:
         if (state_has_changed)
         {
             ROS_INFO("current_state: interacting_with_the_person");
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
-            ROS_INFO("press enter to continue");
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("press enter to continue");
             // getchar();
             frequency = 0;
             frequency_giveup = 0;
@@ -449,7 +456,7 @@ public:
         // if the person goes away from robair, after a while (use frequency), we switch to the state "rotating_to_the_base"
         if (person_tracked)
         {
-            ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
+            // ROS_INFO("person_position: (%f, %f)", person_position.x, person_position.y);
             if (fabs(translation_to_person) <= interaction_distance)
             {
                 // interaction going on - do nothing
@@ -485,7 +492,7 @@ public:
             ROS_INFO("current_state: rotating_to_the_base");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            // getchar();
+            getchar();
             frequency = 0;
         }
 
@@ -499,7 +506,7 @@ public:
         ROS_INFO("Position of base: (%f, %f, %f)" ,local_base_position.x , local_base_position.y,rotation_to_base* 180 / M_PI );
         //0.1 rad ~= 5.7 deg
         ROS_INFO("Rotation to base %f", rotation_to_base);
-        if (fabs(rotation_to_base) < min_angle)
+        if (fabs(rotation_to_base) < min_angle_base)
         {
             ROS_INFO("Waiting on movement..");
             frequency = std::min(frequency_expected_rotating_to_base, frequency + 1);
@@ -524,7 +531,7 @@ public:
             ROS_INFO("current_state: moving_to_the_base");
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
             ROS_INFO("press enter to continue");
-            // getchar();
+            getchar();
             frequency = 0;
         }
 
@@ -537,12 +544,14 @@ public:
             ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation*180/M_PI);
         }
         //If the translation to do is less than or equal to 5cm, this indicates that the robot is close
-        if(translation_to_base <= 0.005){
+        if(translation_to_base <= 0.3){
             frequency = std::min(frequency_expected_trasnlation_to_base, frequency + 1);
             //After a while, if the translation to do is less than or equal to 5cm, then we note that robair is not moving and we change state
             if (frequency == frequency_expected_trasnlation_to_base)
             {
+                translation_to_base = 0;
                 current_state = resetting_orientation;
+
             }
         }
         else{
@@ -556,11 +565,13 @@ public:
 
         if (state_has_changed)
         {
-            ROS_INFO("current_state: initializing_rotation");
-            ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
-            ROS_INFO("press enter to continue");
-            // getchar();
-            frequency = 0;
+            ROS_INFO("current_state: reseting_orientation");
+            // ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
+            // ROS_INFO("press enter to continue");
+                    // getchar();
+                    frequency = 0;
+            // pub_goal_to_reach.publish(local_base_position);
+
         }
 
         // Processing of the state
@@ -568,10 +579,12 @@ public:
         // if robair is close to its initial orientation and does not move, after a while (use frequency), we switch to the state "waiting_for_a_person"
         if (new_localization)
         {
-            ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
+            // ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation * 180 / M_PI);
         }
+
+        ROS_INFO("cur_or: %f, base_or: %f)", current_orientation*180/M_PI, base_orientation*180/M_PI);
         
-        if(fabs(current_orientation - base_orientation) <= min_angle){
+        if(fabs(current_orientation - base_orientation) <= 0.2){
             frequency = std::min(frequency_expected_orientation_at_base, frequency + 1);
             if (frequency == frequency_expected_orientation_at_base)
             {
@@ -580,7 +593,7 @@ public:
         }
         else{
             std_msgs::Float32 rot_msg = std_msgs::Float32();
-            rot_msg.data = rotation_to_base;
+            rot_msg.data = - current_orientation + base_orientation;
             pub_rotation_to_do.publish(rot_msg);
         }
 
@@ -615,6 +628,10 @@ public:
             base_position.x = l->x;
             base_position.y = l->y;
             base_orientation = l->z;
+
+            //     base_position.x = 1;
+            // base_position.y = 1;
+            // base_orientation = 2;
             ROS_INFO("position of robair in the map: (%f, %f, %f)", base_position.x, base_position.y, base_orientation * 180 / M_PI);
 
         }
