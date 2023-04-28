@@ -66,15 +66,15 @@ geometry_msgs::Point transformPoint(geometry_msgs::Point &base, geometry_msgs::P
 }
 
 // Keep the value passed as parameter withing the unit circle
-// Input: orientation of the robot in the map frame
-// Output: orientation of the robot in the map frame, within the unit circle 
+// Input: orientation in radians
+// Output: orientation, within the unit circle 
 float clamp(float orientation)
 {
-    if (orientation > M_PI)
-        return orientation - 2 * M_PI * (int)(orientation / (2 * M_PI));
+    while (orientation > M_PI)
+        orientation -= 2 * M_PI;
 
-    if (orientation < -M_PI)
-        return orientation + 2 * M_PI * (int)(orientation / (2 * M_PI));
+    while (orientation < -M_PI)
+        orientation += 2 * M_PI;
 
     return orientation;
 }
@@ -547,7 +547,7 @@ public:
 
         if ( new_localization || state_has_changed)
         {
-            ROS_INFO("position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation*180/M_PI);
+            ROS_INFO("moving to base: position of robair in the map: (%f, %f, %f)", current_position.x, current_position.y, current_orientation*180/M_PI);
             if(!close_enough){
                 pub_goal_to_reach.publish(local_base_position);
                 frequency = 0;
@@ -563,6 +563,8 @@ public:
                 translation_to_base = 0;
                 current_state = resetting_orientation;
             }
+            ROS_INFO("moving to base, f: %d/%d", frequency, frequency_expected_translation_to_base);
+
         }
     }
 
@@ -602,6 +604,8 @@ public:
             {
                 current_state = waiting_for_a_person;
             }
+            ROS_INFO("resetting orientation, f: %d/%d", frequency, frequency_expected_orientation_at_base);
+
         }
     }
 
@@ -633,19 +637,21 @@ public:
         {
             base_position.x = l->x;
             base_position.y = l->y;
-            base_orientation = l->z;
+            base_orientation = clamp(l->z);
+            ROS_INFO("Z: %f", l->z);
+
+            ROS_INFO("base orientation: %f", base_orientation * 180 / M_PI);
 
             //     base_position.x = 1;
             // base_position.y = 1;
             // base_orientation = 2;
             ROS_INFO("position of robair in the map: (%f, %f, %f)", base_position.x, base_position.y, base_orientation * 180 / M_PI);
-
         }
 
         new_localization = true;
         init_localization = true;
         current_position = *l;
-        current_orientation = l->z;
+        current_orientation =clamp(l->z);
     }
 
     // Distance between two points
