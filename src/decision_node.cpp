@@ -76,6 +76,7 @@ float clamp(float orientation)
     while (orientation < -M_PI)
         orientation += 2 * M_PI;
 
+    }
     return orientation;
 }
 
