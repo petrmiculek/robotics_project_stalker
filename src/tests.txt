@@ -1,0 +1,17 @@
+1) Basic use case
+
+Interact with one person, come back home.
+
+
+2) Too far from base
+
+While moving to the person, the person walks away past the `max_base_distance`.
+The threshold can be set to a lower value for demonstration.
+
+Expected result: robot comes back home.
+
+3) Obstacle in the way
+
+Expected result: ???, we don't handle that explicitly, apart from stopping in front of an obstacle.
+
+4) 

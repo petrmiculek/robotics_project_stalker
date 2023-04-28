@@ -7,6 +7,7 @@
 #include "geometry_msgs/Point.h"
 #include "std_msgs/ColorRGBA.h"
 #include <cmath>
+#include <vector>
 #include "nav_msgs/Odometry.h"
 #include <tf/transform_datatypes.h>
 #include "std_msgs/Int32.h"
@@ -136,6 +137,8 @@ public:
         init_laser = false;
         init_robot = false;
 
+        stored_background = false;
+
         previous_robot_moving = true;
 
         tracking_mode = false;
@@ -235,13 +238,9 @@ public:
 
     void reset_motion()
     {
-        // for each hit, compare the current range with the background to detect motion
-
-        // ROS_INFO("reset motion");
+        // nothing is dynamic, because the robot is moving
         for (int loop = 0; loop < nb_beams; loop++)
             dynamic[loop] = false;
-
-        // ROS_INFO("reset_motion done");
 
     } // reset_motion
 
@@ -256,7 +255,8 @@ public:
             //  r ) is higher than "detection_threshold"
             float diff = fabs(background[loop] - r[loop]);
 
-            if (diff > detection_threshold * (1 + 0.2 * fabs(background[loop]))) //      // remember change from assignment here, 20cm at 0m, 40cm at 5m
+            if (diff > detection_threshold) //       * (1 + 0.2 * fabs(background[loop]))
+            // remember change from assignment here, 20cm at 0m, 40cm at 5m
             {
                 dynamic[loop] = true; // the current hit is dynamic
                 // ROS_INFO("motion detected");
