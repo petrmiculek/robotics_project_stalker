@@ -71,11 +71,17 @@ geometry_msgs::Point transformPoint(geometry_msgs::Point &base, geometry_msgs::P
 float clamp(float orientation)
 {
     if (orientation > M_PI)
-        return orientation - 2 * M_PI * (int)(orientation / (2 * M_PI));
+    {
+        // subtract multiple of M_PI
+        orientation -= 2 * M_PI * floor(orientation / M_PI);
+    }
 
     if (orientation < -M_PI)
-        return orientation + 2 * M_PI * (int)(orientation / (2 * M_PI));
+    {
+        // add multiple of M_PI
+        orientation += 2 * M_PI * floor(-orientation / M_PI);
 
+    }
     return orientation;
 }
 
