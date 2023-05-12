@@ -29,13 +29,14 @@
 float clamp(float orientation)
 {
     if (orientation > M_PI)
-        return orientation - 2 * M_PI * (int)(orientation / (2 * M_PI));
+        return orientation - 2 * floor(orientation / (2 * M_PI));
 
     if (orientation < -M_PI)
-        return orientation + 2 * M_PI * (int)(orientation / (2 * M_PI));
+        return orientation + 2 * floor(-orientation / (2 * M_PI));
 
     return orientation;
 }
+
 class action_node {
 private:
 
