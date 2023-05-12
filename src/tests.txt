@@ -12,6 +12,7 @@ Expected result: robot comes back home.
 
 3) Obstacle in the way
 
-Expected result: ???, we don't handle that explicitly, apart from stopping in front of an obstacle.
+Expected result: We don't handle that explicitly, apart from stopping in front of an obstacle. 
+Ideally, robot should wait until the obstacle is gone, and then continue.
 
 4) 

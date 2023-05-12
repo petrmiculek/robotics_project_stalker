@@ -21,8 +21,10 @@ using namespace std;
 #define distance_resolution 0.05                                 /* in meters */
 #define angle_resolution_degrees 5                               /* in degrees */
 #define angle_resolution (angle_resolution_degrees * M_PI / 180) /* in radians */
-#define distance_to_travel 1
-#define angle_to_travel 20
+#define distance_to_travel 0.5
+#define angle_to_travel 10
+
+#define ticks_until_update 25  // 2.5 seconds static until update (when odom says we have moved since last update)
 
 #define uncertainty 0.05
 
@@ -81,6 +83,10 @@ private:
     float angle_traveled;
     float previous_angle_traveled;
 
+    // performing localization periodically if static
+    bool moved_since_localization; // true if the robot has moved since last localization
+    int ticks_since_update;  // how long since last (localization && movement)
+
 public:
     localization_node()
     {
@@ -101,6 +107,8 @@ public:
             ros::Duration d(0.5);
             d.sleep();
         }
+
+        ticks_since_update = 0;
 
         init_odom = false;
         init_laser = false;
@@ -155,11 +163,19 @@ public:
             if ((distance_traveled != previous_distance_traveled) || (angle_traveled != previous_angle_traveled))
                 ROS_INFO("distance_traveled = %f, angle_traveled = %f since last localization", distance_traveled, angle_traveled * 180 / M_PI);
 
+            
+            bool update_odom_threshold = (distance_traveled > distance_to_travel) || (fabs(angle_traveled * 180 / M_PI) > angle_to_travel);
+            if (moved_since_localization) {
+                ticks_since_update++;
+            }
 
-            if ((distance_traveled > distance_to_travel) || (fabs(angle_traveled * 180 / M_PI) > angle_to_travel))
+            if (update_odom_threshold || (ticks_since_update >= ticks_until_update))
             {
+                ROS_INFO("Localize (%s)", update_odom_threshold ? "odom" : "periodic");
                 predict_position();
                 estimate_position();
+                ticks_since_update = 0;
+                moved_since_localization = false;
             }
         }
 
@@ -448,6 +464,14 @@ public:
     {
 
         init_odom = true;
+
+        // if moved, save flag
+        if (odom_current.x != o->pose.pose.position.x || 
+            odom_current.y != o->pose.pose.position.y || 
+            odom_current_orientation != tf::getYaw(o->pose.pose.orientation)) {
+            moved_since_localization = true;
+        }
+
         odom_current.x = o->pose.pose.position.x;
         odom_current.y = o->pose.pose.position.y;
         odom_current_orientation = tf::getYaw(o->pose.pose.orientation);
